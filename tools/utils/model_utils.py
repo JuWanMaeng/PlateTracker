@@ -64,7 +64,7 @@ def fuse_conv_and_bn(conv, bn):
 
 
 def fuse_model(model):
-    from yolox.models.network_blocks import BaseConv
+    from tools.models.network_blocks import BaseConv
 
     for m in model.modules():
         if type(m) is BaseConv and hasattr(m, "bn"):

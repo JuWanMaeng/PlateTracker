@@ -7,9 +7,9 @@ import torch
 
 from loguru import logger
 
-from yolox.utils.visualize import plot_tracking
-from yolox.tracker.byte_tracker import BYTETracker
-from yolox.tracking_utils.timer import Timer
+from tools.utils.visualize import plot_tracking
+from tools.tracker.byte_tracker import BYTETracker
+from tools.tracking_utils.timer import Timer
 from detector import YOLOVideoProcessor
 
 
