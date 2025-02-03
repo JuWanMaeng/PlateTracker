@@ -1,0 +1,48 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "my demo",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "my_track.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0",  // GPU 설정 (필요한 경우)
+                // "PYTHONPATH": "${workspaceFolder}" // 프로젝트 루트 경로 추가
+            },
+            "args": [
+                "video",
+                "--path", "/workspace/ByteTrack/video2.mp4",
+                "--device", "gpu",
+                "--conf", "0.3",
+                "--nms", "0.4",
+                "--save_result", 
+            ]
+        },
+
+        {
+            "name": "demo_trak",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "demo_track.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "0",  // GPU 설정 (필요한 경우)
+                // "PYTHONPATH": "${workspaceFolder}" // 프로젝트 루트 경로 추가
+            },
+            "args": [
+                "video",
+                "-f", "exps/example/mot/yolox_x_mix_det.py",
+                "-c", "pretrained/bytetrack_x_mot17.pth.tar",
+                "--fp16",
+                "--fuse",
+                "--save_result"
+         
+            ]
+        },
+    
+    ]
+}
