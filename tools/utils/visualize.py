@@ -8,6 +8,19 @@ import numpy as np
 __all__ = ["vis"]
 
 
+def convert_origin_dots(x1, y1, w, h, bbox_margin_w, bbox_margin_h):
+
+    orig_w = max(w // (1 + 2 * bbox_margin_w), 0)
+    orig_h = max(h // (1 + 2 * bbox_margin_h), 0)
+
+    delta_w = w * (bbox_margin_w / (1 + 2 * bbox_margin_w))
+    delta_h = h * (bbox_margin_h / (1 + 2 * bbox_margin_h))
+
+    orig_x1 = max(x1 + delta_w, 0)
+    orig_y1 = max(y1 + delta_h, 0)
+
+    return orig_x1, orig_y1, orig_w, orig_h
+
 def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
     for i in range(len(boxes)):
@@ -49,7 +62,7 @@ def get_color(idx):
     return color
 
 
-def plot_tracking(image, tlwhs, obj_ids, args, scores=None, frame_id=0, fps=0., ids2=None):
+def plot_tracking(image, bbox_margin_w, bbox_margin_h, tlwhs, obj_ids, args, scores=None, frame_id=0, fps=0., ids2=None):
     im = np.ascontiguousarray(np.copy(image))
     im_h, im_w = im.shape[:2]
 
@@ -69,7 +82,8 @@ def plot_tracking(image, tlwhs, obj_ids, args, scores=None, frame_id=0, fps=0., 
 
     for i, tlwh in enumerate(tlwhs):
         x1, y1, w, h = tlwh
-        intbox = tuple(map(int, (x1, y1, x1 + w - args.box_margin, y1 + h - args.box_margin)))
+        orig_x1, orig_y1, orig_w, orig_h = convert_origin_dots(x1, y1, w, h, bbox_margin_w, bbox_margin_h)
+        intbox = tuple(map(int, (orig_x1, orig_y1, orig_x1 + orig_w, orig_y1 + orig_h)))
         obj_id = int(obj_ids[i])
         id_text = '{}'.format(int(obj_id))
         if ids2 is not None:

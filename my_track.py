@@ -141,7 +141,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
                         )
                 timer.toc()
                 online_im = plot_tracking(
-                    img_info['raw_img'], online_tlwhs, online_ids, args, frame_id=frame_id + 1, fps=1. / timer.average_time,
+                    img_info['raw_img'], img_info["bbox_margin_w"], img_info["bbox_margin_h"], online_tlwhs, online_ids, args, frame_id=frame_id + 1, fps=1. / timer.average_time,
                 )
             else:
                 timer.toc()

@@ -6,10 +6,12 @@ from ultralytics import YOLO
 import torch
 
 class YOLOVideoProcessor:
-    def __init__(self, model_path, margin_ratio=0.2, confidence_threshold=0.3):
+    def __init__(self, model_path, margin_ratio=0.2, confidence_threshold=0.3, bbox_margin_w = 0.5, bbox_margin_h = 2):
         self.model = YOLO(model_path, task='detect')
         self.margin_ratio = margin_ratio
         self.confidence_threshold = confidence_threshold
+        self.bbox_margin_w = bbox_margin_w
+        self.bbox_margin_h = bbox_margin_h
 
     def _quatered_margin_percent(self, img):
         h, w, _ = img.shape    
@@ -22,6 +24,27 @@ class YOLOVideoProcessor:
         
         return [top_left, top_right, bottom_left, bottom_right]
     
+    def _bbox_margin(self, x1, y1, x2, y2):
+
+        w = x2 - x1
+        h = y2 - y1
+
+        half_w = w // 2
+        half_h = h // 2
+
+        center_x = x1 + half_w
+        center_y = y1 + half_h
+
+        new_w = w * (1 + 2 * self.bbox_margin_w)
+        new_h = h * (1 + 2 * self.bbox_margin_h)
+
+        bm_x1 = max(center_x - (new_w // 2), 0)
+        bm_y1 = max(center_y - (new_h // 2), 0)
+        bm_x2 = max(center_x + (new_w // 2), 0)
+        bm_y2 = max(center_y + (new_h // 2), 0)
+
+        return bm_x1, bm_y1, bm_x2, bm_y2
+
     def _non_max_suppression(self, boxes):
         x1, y1, x2, y2 = boxes[:, 0], boxes[:, 1], boxes[:, 2], boxes[:, 3]
         area = (x2 - x1 + 1) * (y2 - y1 + 1)
@@ -48,6 +71,8 @@ class YOLOVideoProcessor:
         img_info["width"] = width
         img_info["raw_img"] = frame
         img_info["ratio"] = 0  # TODO
+        img_info["bbox_margin_w"] = self.bbox_margin_w
+        img_info["bbox_margin_h"] = self.bbox_margin_h
 
         timer.tic()
         results = self.model.predict(self._quatered_margin_percent(frame), half=True)
@@ -56,7 +81,6 @@ class YOLOVideoProcessor:
         fh, fw, _ = frame.shape
         hfh, hfw = fh // 2, fw // 2
         w_margin, h_margin = int(hfw * self.margin_ratio), int(hfh * self.margin_ratio)
-
         NMS_box_list, NMS_conf_list, NMS_cls_name = [], [], []
         output_list = []  # 최종 출력 리스트
 
@@ -82,21 +106,26 @@ class YOLOVideoProcessor:
                 NMS_conf_list.append(confidence)
                 NMS_cls_name.append(self.model.names[cls_id])
 
+                bm_x1, bm_y1, bm_x2, bm_y2 = self._bbox_margin(x1, y1, x2, y2)
+
                 # 각 결과를 [x1, y1, x2, y2, confidence, 1, class_id] 형태로 저장
-                output_tensor = torch.tensor([x1, y1, x2+args.box_margin, y2+args.box_margin, confidence, 1, cls_id], dtype=torch.float32)
+                #output_tensor = torch.tensor([x1, y1, x2+args.box_margin, y2+args.box_margin, confidence, 1, cls_id], dtype=torch.float32) # 수정전
+                output_tensor = torch.tensor([bm_x1, bm_y1, bm_x2, bm_y2, confidence, 1, cls_id], dtype=torch.float32) # bbox margin 적용
                 output_list.append(output_tensor)
 
         final_output = []
+        original_plot = []
         if NMS_box_list:
             selected_idx = self._non_max_suppression(np.array(NMS_box_list))
             for idx in selected_idx:
                 final_output.append(output_list[idx])  # NMS로 선택된 결과 추가
-
+        
         # 최종 결과를 N x 7 형태의 하나의 텐서로 변환
         if final_output:
             final_output = torch.stack(final_output)  # 리스트를 [N, 7] 형태의 텐서로 변환
         else:
             final_output = torch.empty((0, 7), dtype=torch.float32)  # 빈 텐서 반환
+ 
 
         return [final_output], img_info
 
