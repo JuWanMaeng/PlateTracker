@@ -197,6 +197,6 @@ def main(exp, args):
 
 if __name__ == "__main__":
     args = make_parser().parse_args()
-    exp = YOLOVideoProcessor(model_path='/workspace/ByteTrack/algorithm2.pt', margin_ratio=0.2, confidence_threshold=0.3)
+    exp = YOLOVideoProcessor(model_path='/workspace/PlateTracker/pretrained/plate_tracker.pt', margin_ratio=0.2, confidence_threshold=0.3)
 
     main(exp, args)
