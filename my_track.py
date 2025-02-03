@@ -23,7 +23,7 @@ def make_parser():
     )
 
     parser.add_argument(
-        "--path", default="/workspace/PlateTracker/input_video/video.mp4", help="path to images or video"
+        "--path", default="input_video/video.mp4", help="path to images or video"
     )
     parser.add_argument(
         "--save_result",
@@ -32,7 +32,7 @@ def make_parser():
     )
     parser.add_argument(
         "--output_dir",
-        default='/workspace/PlateTracker/result',
+        default='result',
         help="whether to save the inference result of image/video",
     )
 
@@ -108,6 +108,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         save_path = osp.join(save_folder, args.path.split("/")[-1])
     else:
         save_path = osp.join(save_folder, "camera.mp4")
+        
     logger.info(f"video save_path is {save_path}")
     vid_writer = cv2.VideoWriter(
         save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
@@ -184,6 +185,6 @@ def main(exp, args):
 
 if __name__ == "__main__":
     args = make_parser().parse_args()
-    exp = YOLOVideoProcessor(model_path='/workspace/PlateTracker/pretrained/plate_tracker.pt', margin_ratio=0.2, confidence_threshold=0.3)
+    exp = YOLOVideoProcessor(model_path='algorithm2_original.engine', margin_ratio=0.2, confidence_threshold=0.3)
 
     main(exp, args)
