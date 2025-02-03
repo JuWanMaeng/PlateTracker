@@ -21,6 +21,10 @@ class Timer(object):
         self.diff = time.time() - self.start_time
         self.total_time += self.diff
         self.calls += 1
+
+        if self.calls ==2:
+            self.total_time = self.diff * 2
+            
         self.average_time = self.total_time / self.calls
         if average:
             self.duration = self.average_time

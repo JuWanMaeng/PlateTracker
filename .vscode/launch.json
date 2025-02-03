@@ -14,9 +14,8 @@
             },
             "args": [
                 "video",
-                "--path", "/workspace/ByteTrack/video2.mp4",
+                "--path", "/workspace/PlateTracker/input_video/video.mp4",
                 "--device", "gpu",
-                "--conf", "0.3",
                 "--nms", "0.4",
                 "--save_result", 
             ]

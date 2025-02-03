@@ -41,7 +41,7 @@ class YOLOVideoProcessor:
             indices = indices[np.where(0 == iou)[0] + 1]
         return selected_indices
     
-    def inference(self, frame, timer):
+    def inference(self, frame, timer, args):
         img_info = {"id": 0}
         height, width = frame.shape[:2]
         img_info["height"] = height
@@ -49,6 +49,7 @@ class YOLOVideoProcessor:
         img_info["raw_img"] = frame
         img_info["ratio"] = 0  # TODO
 
+        timer.tic()
         results = self.model.predict(self._quatered_margin_percent(frame), half=True)
 
         annotated_frame = frame.copy()
@@ -82,7 +83,7 @@ class YOLOVideoProcessor:
                 NMS_cls_name.append(self.model.names[cls_id])
 
                 # 각 결과를 [x1, y1, x2, y2, confidence, 1, class_id] 형태로 저장
-                output_tensor = torch.tensor([x1, y1, x2+50, y2+50, confidence, 1, cls_id], dtype=torch.float32)
+                output_tensor = torch.tensor([x1, y1, x2+args.box_margin, y2+args.box_margin, confidence, 1, cls_id], dtype=torch.float32)
                 output_list.append(output_tensor)
 
         final_output = []
