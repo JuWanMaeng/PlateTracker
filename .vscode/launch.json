@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "my demo",
+            "name": "my track",
             "type": "debugpy",
             "request": "launch",
             "program": "my_track.py",
@@ -16,8 +16,8 @@
                 "video",
                 "--path", "/workspace/PlateTracker/input_video/video.mp4",
                 "--device", "gpu",
-                "--nms", "0.4",
                 "--save_result", 
+                "--box_margin", "50"
             ]
         },
 
