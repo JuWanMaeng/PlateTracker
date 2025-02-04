@@ -3,10 +3,13 @@
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
 import cv2
+import os
 import numpy as np
 
 __all__ = ["vis"]
 
+
+save_dir = "/home/hunature/Desktop/PlateTracker/result/crop_img"
 
 def convert_origin_dots(x1, y1, w, h, bbox_margin_w, bbox_margin_h):
 
@@ -79,6 +82,9 @@ def plot_tracking(image, bbox_margin_w, bbox_margin_h, xyxy, tlwhs, obj_ids, arg
     
     cv2.putText(im, 'frame: %d fps: %.2f num: %d' % (frame_id, fps, len(tlwhs)),
                 (0, int(15 * text_scale)), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), thickness=2)
+    
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
     for i, tlwh in enumerate(tlwhs):
         x1, y1, w, h = tlwh
@@ -86,11 +92,21 @@ def plot_tracking(image, bbox_margin_w, bbox_margin_h, xyxy, tlwhs, obj_ids, arg
         orig_w = orig_x2 - orig_x1
         orig_h = orig_y2 - orig_y1
         intbox = tuple(map(int, (orig_x1, orig_y1, orig_x1 + orig_w, orig_y1 + orig_h)))
+
+        tlwhbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
+        # Crop 및 저장
+        # if frame_id == 113:
+        #     crop_img = im[intbox[1]:intbox[3], intbox[0]:intbox[2]]
+        #     crop_filename = f"{save_dir}/crop_frame{frame_id}_id{obj_ids[i]}.png"
+        #     cv2.imwrite(crop_filename, crop_img)
+
+        xyxy_color = (255, 255, 255)
         obj_id = int(obj_ids[i])
         id_text = '{}'.format(int(obj_id))
         if ids2 is not None:
             id_text = id_text + ', {}'.format(int(ids2[i]))
         color = get_color(abs(obj_id))
+        cv2.rectangle(im, tlwhbox[0:2], tlwhbox[2:4], color=xyxy_color, thickness=1)
         cv2.rectangle(im, intbox[0:2], intbox[2:4], color=color, thickness=line_thickness)
         cv2.putText(im, id_text, (intbox[0], intbox[1]), cv2.FONT_HERSHEY_PLAIN, text_scale, (0, 0, 255),
                     thickness=text_thickness)
