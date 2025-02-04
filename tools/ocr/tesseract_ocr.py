@@ -37,6 +37,6 @@ for filename in os.listdir(path):
         # text = pytesseract.image_to_string(img)
 
         # 결과 출력
-        print(f"📄 파일명: {filename}")
-        print(f"🔍 OCR 결과:\n{text}")
+        print(f"파일명: {filename}")
+        print(f"OCR 결과:\n{text}")
         print("-" * 50)

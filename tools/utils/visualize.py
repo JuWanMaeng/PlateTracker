@@ -100,7 +100,7 @@ def plot_tracking(image, bbox_margin_w, bbox_margin_h, xyxy, tlwhs, obj_ids, arg
         #     crop_filename = f"{save_dir}/crop_frame{frame_id}_id{obj_ids[i]}.png"
         #     cv2.imwrite(crop_filename, crop_img)
 
-        xyxy_color = (255, 255, 255)
+        xyxy_color = (255, 255, 254)
         obj_id = int(obj_ids[i])
         id_text = '{}'.format(int(obj_id))
         if ids2 is not None:
