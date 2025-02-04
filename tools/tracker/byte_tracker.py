@@ -12,10 +12,11 @@ from .basetrack import BaseTrack, TrackState
 
 class STrack(BaseTrack):
     shared_kalman = KalmanFilter()
-    def __init__(self, tlwh, score):
+    def __init__(self, tlwh, xyxy, score):
 
         # wait activate
         self._tlwh = np.asarray(tlwh, dtype=np.float32)
+        self.xyxy = np.asarray(xyxy, dtype=np.float32)
         self.kalman_filter = None
         self.mean, self.covariance = None, None
         self.is_activated = False
@@ -78,6 +79,7 @@ class STrack(BaseTrack):
         """
         self.frame_id = frame_id
         self.tracklet_len += 1
+        self.xyxy = new_track.xyxy
 
         new_tlwh = new_track.tlwh
         self.mean, self.covariance = self.kalman_filter.update(
@@ -166,10 +168,12 @@ class BYTETracker(object):
         if output_results.shape[1] == 5:
             scores = output_results[:, 4]
             bboxes = output_results[:, :4]
+            origin_bbox = output_results[:, 7:11]
         else:
             output_results = output_results.cpu().numpy()
             scores = output_results[:, 4] * output_results[:, 5]
             bboxes = output_results[:, :4]  # x1y1x2y2
+            origin_bbox = output_results[:, 7:11]
         img_h, img_w = img_info[0], img_info[1]
         if img_size == None:
             scale = 1
@@ -183,21 +187,25 @@ class BYTETracker(object):
 
         inds_second = np.logical_and(inds_low, inds_high)
         dets_second = bboxes[inds_second]
+        orig_second = origin_bbox[inds_second]
         dets = bboxes[remain_inds]
+        orig_dets = origin_bbox[remain_inds]
         scores_keep = scores[remain_inds]
         scores_second = scores[inds_second]
 
         if len(dets) > 0:
             '''Detections'''
-            detections = [STrack(STrack.tlbr_to_tlwh(tlbr), s) for
-                          (tlbr, s) in zip(dets, scores_keep)]
+            # frame 2 에서 detection된 박스들 -> 트래킹에 아직 안들어갔음
+            detections = [STrack(STrack.tlbr_to_tlwh(tlbr), xyxy, s) for
+                          (tlbr, xyxy, s) in zip(dets, orig_dets, scores_keep)]
         else:
             detections = []
+            orig_dets = []
 
         ''' Add newly detected tracklets to tracked_stracks'''
         unconfirmed = []
         tracked_stracks = []  # type: list[STrack]
-        for track in self.tracked_stracks:
+        for track in self.tracked_stracks:  # 이전 프레임들까지 추적되던 박스들
             if not track.is_activated:
                 unconfirmed.append(track)
             else:
@@ -206,16 +214,15 @@ class BYTETracker(object):
         ''' Step 2: First association, with high score detection boxes'''
         strack_pool = joint_stracks(tracked_stracks, self.lost_stracks)
         # Predict the current location with KF
-        STrack.multi_predict(strack_pool)
+        STrack.multi_predict(strack_pool) # 이전 프레임의 박스에다가 칼만필터를 넣어서 현재 프레임의 추정되는 위치
         dists = matching.iou_distance(strack_pool, detections)
         if not self.args.mot20:
             dists = matching.fuse_score(dists, detections)
         matches, u_track, u_detection = matching.linear_assignment(dists, thresh=self.args.match_thresh)
         # u_track은 놓친 track의 index임
-
         for itracked, idet in matches:
-            track = strack_pool[itracked]
-            det = detections[idet]
+            track = strack_pool[itracked] # 이전 프레임까지 추적되어오던 박스들
+            det = detections[idet]        # 현재 프레임에서 발견된 박스들
             if track.state == TrackState.Tracked:
                 track.update(detections[idet], self.frame_id)
                 activated_starcks.append(track)
@@ -227,8 +234,8 @@ class BYTETracker(object):
         # association the untrack to the low score detections
         if len(dets_second) > 0:
             '''Detections'''
-            detections_second = [STrack(STrack.tlbr_to_tlwh(tlbr), s) for
-                          (tlbr, s) in zip(dets_second, scores_second)]
+            detections_second = [STrack(STrack.tlbr_to_tlwh(tlbr), xyxy, s) for
+                          (tlbr, xyxy, s) in zip(dets_second ,orig_second, scores_second)]
         else:
             detections_second = []
         r_tracked_stracks = [strack_pool[i] for i in u_track if strack_pool[i].state == TrackState.Tracked]

@@ -109,8 +109,8 @@ class YOLOVideoProcessor:
                 bm_x1, bm_y1, bm_x2, bm_y2 = self._bbox_margin(x1, y1, x2, y2)
 
                 # 각 결과를 [x1, y1, x2, y2, confidence, 1, class_id] 형태로 저장
-                #output_tensor = torch.tensor([x1, y1, x2+args.box_margin, y2+args.box_margin, confidence, 1, cls_id], dtype=torch.float32) # 수정전
-                output_tensor = torch.tensor([bm_x1, bm_y1, bm_x2, bm_y2, confidence, 1, cls_id], dtype=torch.float32) # bbox margin 적용
+                #output_tensor = torch.tensor([x1, y1, x2+args.box_margin, y2+args.box_margin, confidence, 1, cls_id], dtype=torch.float32) # 수정전 - bbox margin constant 값으로 줌
+                output_tensor = torch.tensor([bm_x1, bm_y1, bm_x2, bm_y2, confidence, 1, cls_id, x1, y1, x2, y2], dtype=torch.float32) # bbox margin 적용 + (원본 x1 y1 x2 y2) 좌표 추가
                 output_list.append(output_tensor)
 
         final_output = []
@@ -120,11 +120,11 @@ class YOLOVideoProcessor:
             for idx in selected_idx:
                 final_output.append(output_list[idx])  # NMS로 선택된 결과 추가
         
-        # 최종 결과를 N x 7 형태의 하나의 텐서로 변환
+        # 최종 결과를 N x 7 형태의 하나의 텐서로 변환 -> N X 11 형태의 텐서 (원본 x1 y1 x2 y2) 좌표 추가
         if final_output:
-            final_output = torch.stack(final_output)  # 리스트를 [N, 7] 형태의 텐서로 변환
+            final_output = torch.stack(final_output)  # 리스트를 [N, 7] 형태의 텐서로 변환 -> 리스트를 [N, 11] 형태의 텐서로 변환
         else:
-            final_output = torch.empty((0, 7), dtype=torch.float32)  # 빈 텐서 반환
+            final_output = torch.empty((0, 11), dtype=torch.float32)  # 빈 텐서 반환
  
 
         return [final_output], img_info
