@@ -4,12 +4,14 @@
 
 import cv2
 import os
+import re # ocr 과정에서 중복된 공백 요소 제거
 import numpy as np
+import pytesseract
 
 __all__ = ["vis"]
 
-
-save_dir = "/home/hunature/Desktop/PlateTracker/result/crop_img"
+# object crop 시 사용
+#save_dir = "/home/hunature/Desktop/PlateTracker/result/crop_img" 
 
 def convert_origin_dots(x1, y1, w, h, bbox_margin_w, bbox_margin_h):
 
@@ -74,14 +76,15 @@ def plot_tracking(image, bbox_margin_w, bbox_margin_h, xyxy, tlwhs, obj_ids, arg
     #text_scale = max(1, image.shape[1] / 1600.)
     #text_thickness = 2
     #line_thickness = max(1, int(image.shape[1] / 500.))
-    text_scale = 2
+    text_scale = 1
     text_thickness = 2
     line_thickness = 3
+    ocr_text_scale = 1
 
     radius = max(5, int(im_w/140.))
     
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+    # if not os.path.exists(save_dir):
+    #     os.makedirs(save_dir)
 
     for i, tlwh in enumerate(tlwhs):
         x1, y1, w, h = tlwh
@@ -96,6 +99,26 @@ def plot_tracking(image, bbox_margin_w, bbox_margin_h, xyxy, tlwhs, obj_ids, arg
         #crop_img = im[intbox[1]:intbox[3], intbox[0]:intbox[2]]
         #crop_filename = f"{save_dir}/crop_frame{frame_id}_id{obj_ids[i]}.png"
         #cv2.imwrite(crop_filename, crop_img)
+
+        # 면적 기준으로 OCR 적용 -> 다른 아이디어 적용 후 폐기 예정
+        if intbox[2] * intbox[3] > 700:
+
+            obj_crop = im[intbox[1]:intbox[3], intbox[0]:intbox[2]] # object cropping
+
+            upscaling_img = cv2.resize(obj_crop, None, fx=4, fy=4, interpolation=cv2.INTER_LANCZOS4) # image up scaling 
+
+            ocr_result = pytesseract.image_to_string(upscaling_img, lang='kor+eng')
+
+            # 개행 문자를 공백으로, 폼 피드 제거
+            preprocess_result = ocr_result.replace('\n', ' ').replace('\x0c', '').strip()
+
+            # 중복된 공백 제거
+            final_ocr_result = re.sub(r'\s+', ' ', preprocess_result)
+
+            ocr_text = str(final_ocr_result[:8])
+
+            cv2.putText(im, ocr_text, (intbox[0]+5, intbox[1]), cv2.FONT_HERSHEY_PLAIN, ocr_text_scale, (255, 255, 255),
+                        thickness=text_thickness)
 
         #xyxy_color = (255, 255, 254)
         obj_id = int(obj_ids[i])
