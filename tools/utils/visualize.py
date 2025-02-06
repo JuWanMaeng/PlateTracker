@@ -67,7 +67,19 @@ def get_color(idx):
     return color
 
 
-def plot_tracking(image, bbox_margin_w, bbox_margin_h, xyxy, tlwhs, obj_ids, args, scores=None, frame_id=0, fps=0., ids2=None):
+def plot_tracking(image, 
+                  bbox_margin_w, 
+                  bbox_margin_h, 
+                  xyxy, 
+                  tlwhs, 
+                  obj_ids, 
+                  args, 
+                  plate_info,
+                  scores=None, 
+                  frame_id=0, 
+                  fps=0., 
+                  ids2=None):
+    
     im = np.ascontiguousarray(np.copy(image))
     im_h, im_w = im.shape[:2]
 
@@ -95,31 +107,6 @@ def plot_tracking(image, bbox_margin_w, bbox_margin_h, xyxy, tlwhs, obj_ids, arg
 
         tlwhbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
 
-        # Crop 및 저장
-        #crop_img = im[intbox[1]:intbox[3], intbox[0]:intbox[2]]
-        #crop_filename = f"{save_dir}/crop_frame{frame_id}_id{obj_ids[i]}.png"
-        #cv2.imwrite(crop_filename, crop_img)
-
-        # 면적 기준으로 OCR 적용 -> 다른 아이디어 적용 후 폐기 예정
-        if intbox[2] * intbox[3] > 700:
-
-            obj_crop = im[intbox[1]:intbox[3], intbox[0]:intbox[2]] # object cropping
-
-            upscaling_img = cv2.resize(obj_crop, None, fx=4, fy=4, interpolation=cv2.INTER_LANCZOS4) # image up scaling 
-
-            ocr_result = pytesseract.image_to_string(upscaling_img, lang='kor+eng')
-
-            # 개행 문자를 공백으로, 폼 피드 제거
-            preprocess_result = ocr_result.replace('\n', ' ').replace('\x0c', '').strip()
-
-            # 중복된 공백 제거
-            final_ocr_result = re.sub(r'\s+', ' ', preprocess_result)
-
-            ocr_text = str(final_ocr_result[:8])
-
-            cv2.putText(im, ocr_text, (intbox[0]+5, intbox[1]), cv2.FONT_HERSHEY_PLAIN, ocr_text_scale, (255, 255, 255),
-                        thickness=text_thickness)
-
         #xyxy_color = (255, 255, 254)
         obj_id = int(obj_ids[i])
         id_text = '{}'.format(int(obj_id))
@@ -130,6 +117,12 @@ def plot_tracking(image, bbox_margin_w, bbox_margin_h, xyxy, tlwhs, obj_ids, arg
         cv2.rectangle(im, intbox[0:2], intbox[2:4], color=color, thickness=line_thickness)
         cv2.putText(im, id_text, (intbox[0], intbox[1]), cv2.FONT_HERSHEY_PLAIN, text_scale, (0, 0, 255),
                     thickness=text_thickness)
+        
+        if obj_id in plate_info:
+            ocr_result = plate_info[obj_id]
+            cv2.putText(im, ocr_result, (intbox[0], intbox[1]-10), cv2.FONT_HERSHEY_PLAIN, text_scale, (255, 0, 0),
+            thickness=text_thickness)
+
 
     # crop 한 후 fps plot   
     cv2.putText(im, 'frame: %d fps: %.2f num: %d' % (frame_id, fps, len(tlwhs)),

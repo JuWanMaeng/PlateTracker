@@ -14,10 +14,9 @@
             },
             "args": [
                 "video",
-                "--path", "/home/hunature/Desktop/PlateTracker/input_video/video.mp4",
+                "--path", "/home/hunature/Desktop/PlateTracker/input_video/near1.mp4",
                 "--device", "gpu",
                 "--save_result", 
-                "--box_margin", "50"
             ]
         },
 

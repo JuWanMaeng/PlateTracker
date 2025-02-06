@@ -5,6 +5,8 @@ import time
 import cv2
 import torch
 
+import pytesseract
+
 from loguru import logger
 
 from tools.utils.visualize import plot_tracking
@@ -45,7 +47,7 @@ def make_parser():
     )
     parser.add_argument("--nms", default=None, type=float, help="test nms threshold")
     parser.add_argument("--tsize", default=None, type=int, help="test img size")
-    parser.add_argument("--box_margin", default=0, type=int, help="tracking box size")
+    # parser.add_argument("--box_margin", default=0, type=int, help="tracking box size")
     parser.add_argument("--fps", default=30, type=int, help="frame rate (fps)")
     parser.add_argument(
         "--fp16",
@@ -117,8 +119,11 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
     timer = Timer()
     frame_id = 0
     results = []
+
+    plate_info=dict()
+
     while True:
-        if frame_id % 20 == 0:
+        if frame_id % 50 == 0:
             logger.info('Processing frame {} ({:.2f} fps)'.format(frame_id, 1. / max(1e-5, timer.average_time)))
         ret_val, frame = cap.read()
         if ret_val:
@@ -142,10 +147,26 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
                         results.append(
                             f"{frame_id},{tid},{tlwh[0]:.2f},{tlwh[1]:.2f},{tlwh[2]:.2f},{tlwh[3]:.2f},{t.score:.2f},-1,-1,-1\n"
                         )
+            
+ 
+                        if frame_id % 50 == 0: 
+                            ocrbox = tuple(map(int, (xyxy[0], xyxy[1], xyxy[2], xyxy[3])))
+                            obj_crop = frame[ocrbox[1]:ocrbox[3], ocrbox[0]:ocrbox[2]] # object cropping
+
+                            upscaling_img = cv2.resize(obj_crop, None, fx=4, fy=4, interpolation=cv2.INTER_LANCZOS4) # image up scaling 
+
+                            ocr_result = pytesseract.image_to_string(upscaling_img, lang='kor+eng')
+                            if tid not in plate_info:
+                                plate_info[tid] = ocr_result.split('ㆍ')[0]
+
+
                 timer.toc()
                 online_im = plot_tracking(
-                    img_info['raw_img'], img_info["bbox_margin_w"], img_info["bbox_margin_h"], online_xyxy, online_tlwhs, online_ids, args, frame_id=frame_id + 1, fps=1. / timer.average_time,
+                    img_info['raw_img'], img_info["bbox_margin_w"], img_info["bbox_margin_h"], 
+                    online_xyxy, online_tlwhs, online_ids, args, plate_info, 
+                    frame_id=frame_id + 1, fps=1. / timer.average_time,
                 )
+
             else:
                 timer.toc()
                 online_im = img_info['raw_img']
