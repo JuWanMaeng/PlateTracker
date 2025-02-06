@@ -154,7 +154,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
                             obj_crop = frame[ocrbox[1]:ocrbox[3], ocrbox[0]:ocrbox[2]] # object cropping
 
                             upscaling_img = cv2.resize(obj_crop, None, fx=4, fy=4, interpolation=cv2.INTER_LANCZOS4) # image up scaling 
-
+                            
                             ocr_result = pytesseract.image_to_string(upscaling_img, lang='kor+eng')
                             if tid not in plate_info:
                                 plate_info[tid] = ocr_result.split('ㆍ')[0]
@@ -209,6 +209,6 @@ def main(exp, args):
 
 if __name__ == "__main__":
     args = make_parser().parse_args()
-    exp = YOLOVideoProcessor(model_path='algorithm2_original.engine', margin_ratio=0.2, confidence_threshold=0.3)
+    exp = YOLOVideoProcessor(model_path='./pretrained/algorithm2_original.engine', margin_ratio=0.2, confidence_threshold=0.3)
 
     main(exp, args)
