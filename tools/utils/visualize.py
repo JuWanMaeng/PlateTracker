@@ -105,21 +105,24 @@ def plot_tracking(image,
 
         tlwhbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
 
-        #xyxy_color = (255, 255, 254)
+        xyxy_color = (255, 255, 254)
         obj_id = int(obj_ids[i])
         id_text = '{}'.format(int(obj_id))
         if ids2 is not None:
             id_text = id_text + ', {}'.format(int(ids2[i]))
         color = get_color(abs(obj_id))
-        #cv2.rectangle(im, tlwhbox[0:2], tlwhbox[2:4], color=xyxy_color, thickness=1)
+        cv2.rectangle(im, tlwhbox[0:2], tlwhbox[2:4], color=xyxy_color, thickness=1)
         cv2.rectangle(im, intbox[0:2], intbox[2:4], color=color, thickness=line_thickness)
         cv2.putText(im, id_text, (intbox[0], intbox[1]), cv2.FONT_HERSHEY_PLAIN, text_scale, (0, 0, 255),
                     thickness=text_thickness)
         
-
+    
     # crop 한 후 fps plot   
     cv2.putText(im, 'frame: %d fps: %.2f num: %d' % (frame_id, fps, len(tlwhs)),
-                (0, int(15 * text_scale)), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), thickness=2)
+                (0, int(15 * text_scale)+10), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), thickness=2)
+    
+    if frame_id == 21 or frame_id==44:
+        cv2.imwrite(f'{frame_id}.png', im)
 
     return im
 
