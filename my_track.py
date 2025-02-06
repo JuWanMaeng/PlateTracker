@@ -26,7 +26,7 @@ def make_parser():
         "--path", default="input_video/video.mp4", help="path to images or video"
     )
     parser.add_argument(
-        "--weight_path", default="algorithm2_original.engine", help="path to images or video"
+        "--weight_path", default="pretrained/algorithm2_original.engine", help="path to images or video"
     )
 
     parser.add_argument(
