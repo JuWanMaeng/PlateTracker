@@ -6,8 +6,6 @@ import cv2
 import os
 import re # ocr 과정에서 중복된 공백 요소 제거
 import numpy as np
-import pytesseract
-
 __all__ = ["vis"]
 
 # object crop 시 사용

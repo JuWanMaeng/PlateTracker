@@ -5,8 +5,6 @@ import time
 import cv2
 import torch
 
-import pytesseract
-
 from loguru import logger
 
 from tools.utils.visualize import plot_tracking
@@ -27,6 +25,10 @@ def make_parser():
     parser.add_argument(
         "--path", default="input_video/video.mp4", help="path to images or video"
     )
+    parser.add_argument(
+        "--weight_path", default="algorithm2_original.engine", help="path to images or video"
+    )
+
     parser.add_argument(
         "--save_result",
         action="store_true",
@@ -147,19 +149,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
                         results.append(
                             f"{frame_id},{tid},{tlwh[0]:.2f},{tlwh[1]:.2f},{tlwh[2]:.2f},{tlwh[3]:.2f},{t.score:.2f},-1,-1,-1\n"
                         )
-            
- 
-                        if frame_id % 50 == 0: 
-                            ocrbox = tuple(map(int, (xyxy[0], xyxy[1], xyxy[2], xyxy[3])))
-                            obj_crop = frame[ocrbox[1]:ocrbox[3], ocrbox[0]:ocrbox[2]] # object cropping
-
-                            upscaling_img = cv2.resize(obj_crop, None, fx=4, fy=4, interpolation=cv2.INTER_LANCZOS4) # image up scaling 
-
-                            ocr_result = pytesseract.image_to_string(upscaling_img, lang='kor+eng')
-                            if tid not in plate_info:
-                                plate_info[tid] = ocr_result.split('ㆍ')[0]
-
-
+        
                 timer.toc()
                 online_im = plot_tracking(
                     img_info['raw_img'], img_info["bbox_margin_w"], img_info["bbox_margin_h"], 
@@ -172,9 +162,6 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
                 online_im = img_info['raw_img']
             if args.save_result:
                 vid_writer.write(online_im)
-            # ch = cv2.waitKey(1)
-            # if ch == 27 or ch == ord("q") or ch == ord("Q"):
-            #     break
         else:
             break
         frame_id += 1
@@ -209,6 +196,6 @@ def main(exp, args):
 
 if __name__ == "__main__":
     args = make_parser().parse_args()
-    exp = YOLOVideoProcessor(model_path='algorithm2_original.engine', margin_ratio=0.2, confidence_threshold=0.3)
+    exp = YOLOVideoProcessor(model_path=args.weight_path, margin_ratio=0.2, confidence_threshold=0.3)
 
     main(exp, args)
