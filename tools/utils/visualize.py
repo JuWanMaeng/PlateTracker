@@ -118,11 +118,6 @@ def plot_tracking(image,
         cv2.putText(im, id_text, (intbox[0], intbox[1]), cv2.FONT_HERSHEY_PLAIN, text_scale, (0, 0, 255),
                     thickness=text_thickness)
         
-        if obj_id in plate_info:
-            ocr_result = plate_info[obj_id]
-            cv2.putText(im, ocr_result, (intbox[0], intbox[1]-10), cv2.FONT_HERSHEY_PLAIN, text_scale, (255, 0, 0),
-            thickness=text_thickness)
-
 
     # crop 한 후 fps plot   
     cv2.putText(im, 'frame: %d fps: %.2f num: %d' % (frame_id, fps, len(tlwhs)),
