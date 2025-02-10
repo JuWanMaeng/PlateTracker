@@ -1,5 +1,5 @@
 ## Plate Tracking ##
-Plate Tracking code is available in PT bracnh
+Plate Tracking code is available in PT branch
 https://github.com/JuWanMaeng/PlateTracker/tree/PT
 
 
