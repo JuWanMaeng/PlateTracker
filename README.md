@@ -1,3 +1,9 @@
+## Plate Tracking ##
+Plate Tracking code is available in PT bracnh
+https://github.com/JuWanMaeng/PlateTracker/tree/PT
+
+
+
 ## Installation
 ### 1. Installing on the host machine
 Step1. Install ByteTrack.
