@@ -1,5 +1,5 @@
 ## Results
-![Tracking Result](result/result.gif)
+![Tracking Result](result/int8.gif)
 
 ## Installation
 ### 1. Installing on the host machine
