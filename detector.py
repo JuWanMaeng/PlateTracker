@@ -8,10 +8,10 @@ import torch
 class YOLOVideoProcessor:
     def __init__(self, model_path, margin_ratio=0.2, confidence_threshold=0.3, bbox_margin_w = 0.5, bbox_margin_h = 2):
         self.model = YOLO(model_path, task='detect')
-        self.margin_ratio = margin_ratio
+        self.margin_ratio = margin_ratio # 4분할 이미지의 margin ration를 설정합니다.
         self.confidence_threshold = confidence_threshold
-        self.bbox_margin_w = bbox_margin_w
-        self.bbox_margin_h = bbox_margin_h
+        self.bbox_margin_w = bbox_margin_w # tracking 과정에서 bbox 넓이(w)의 margin 값을 설정합니다.
+        self.bbox_margin_h = bbox_margin_h # tracking 과정에서 bbox 높이(h)의 margin 값을 설정합니다.
 
     def _quatered_margin_percent(self, img):
         h, w, _ = img.shape    
@@ -24,6 +24,7 @@ class YOLOVideoProcessor:
         
         return [top_left, top_right, bottom_left, bottom_right]
     
+    # tracking 을 위한 bbox margin 적용 함수
     def _bbox_margin(self, x1, y1, x2, y2):
 
         w = x2 - x1
@@ -81,7 +82,7 @@ class YOLOVideoProcessor:
         fh, fw, _ = frame.shape
         hfh, hfw = fh // 2, fw // 2
         w_margin, h_margin = int(hfw * self.margin_ratio), int(hfh * self.margin_ratio)
-        NMS_box_list, NMS_conf_list, NMS_cls_name = [], [], []
+        NMS_box_list, NMS_conf_list, NMS_cls_name = [], [], [] # NMS 에 사용할 box, conf_score, class_name 을 담을 list 
         output_list = []  # 최종 출력 리스트
 
         for i, result in enumerate(results):
@@ -92,7 +93,7 @@ class YOLOVideoProcessor:
                 if confidence < self.confidence_threshold:
                     continue
 
-                # 좌표 보정
+                # 좌표 보정 (4분할 이미지에 대한 좌표를 원본 이미지에 대한 좌표로 보정)
                 if i == 1:
                     x1, x2 = x1 + hfw - w_margin, x2 + hfw - w_margin
                 elif i == 2:
@@ -106,10 +107,11 @@ class YOLOVideoProcessor:
                 NMS_conf_list.append(confidence)
                 NMS_cls_name.append(self.model.names[cls_id])
 
-                bm_x1, bm_y1, bm_x2, bm_y2 = self._bbox_margin(x1, y1, x2, y2)
+                bm_x1, bm_y1, bm_x2, bm_y2 = self._bbox_margin(x1, y1, x2, y2) # tracking 을 위한 bbox margin 좌표 변환
 
-                # 각 결과를 [x1, y1, x2, y2, confidence, 1, class_id] 형태로 저장
+                # 각 결과를 [x1, y1, x2, y2, confidence, 1, class_id] 형태로 저장 
                 #output_tensor = torch.tensor([x1, y1, x2+args.box_margin, y2+args.box_margin, confidence, 1, cls_id], dtype=torch.float32) # 수정전 - bbox margin constant 값으로 줌
+
                 output_tensor = torch.tensor([bm_x1, bm_y1, bm_x2, bm_y2, confidence, 1, cls_id, x1, y1, x2, y2], dtype=torch.float32) # bbox margin 적용 + (원본 x1 y1 x2 y2) 좌표 추가
                 output_list.append(output_tensor)
 

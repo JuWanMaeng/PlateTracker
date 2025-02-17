@@ -16,7 +16,7 @@ class STrack(BaseTrack):
 
         # wait activate
         self._tlwh = np.asarray(tlwh, dtype=np.float32)
-        self.xyxy = np.asarray(xyxy, dtype=np.float32)
+        self.xyxy = np.asarray(xyxy, dtype=np.float32) # 시각화 할 original bbox 좌표입니다.
         self.kalman_filter = None
         self.mean, self.covariance = None, None
         self.is_activated = False
@@ -168,12 +168,12 @@ class BYTETracker(object):
         if output_results.shape[1] == 5:
             scores = output_results[:, 4]
             bboxes = output_results[:, :4]
-            origin_bbox = output_results[:, 7:11]
+            origin_bbox = output_results[:, 7:11] # original xyxy 값을 가져옵니다.
         else:
             output_results = output_results.cpu().numpy()
             scores = output_results[:, 4] * output_results[:, 5]
             bboxes = output_results[:, :4]  # x1y1x2y2
-            origin_bbox = output_results[:, 7:11]
+            origin_bbox = output_results[:, 7:11] # origianl xyxy 값을 가져옵니다.
         img_h, img_w = img_info[0], img_info[1]
         if img_size == None:
             scale = 1
@@ -187,9 +187,9 @@ class BYTETracker(object):
 
         inds_second = np.logical_and(inds_low, inds_high)
         dets_second = bboxes[inds_second]
-        orig_second = origin_bbox[inds_second]
+        orig_second = origin_bbox[inds_second] # original xyxy 에 대한 second
         dets = bboxes[remain_inds]
-        orig_dets = origin_bbox[remain_inds]
+        orig_dets = origin_bbox[remain_inds] # original xyxy 에 대한 remain
         scores_keep = scores[remain_inds]
         scores_second = scores[inds_second]
 

@@ -5,7 +5,7 @@
             "name": "my track",
             "type": "debugpy",
             "request": "launch",
-            "program": "my_track.py",
+            "program": "track.py",
             "console": "integratedTerminal",
             "justMyCode": true,
             "env": {
@@ -14,7 +14,7 @@
             },
             "args": [
                 "video",
-                "--path", "/home/hunature/Desktop/PlateTracker/input_video/near1.mp4",
+                "--path", "/home/hunature/Desktop/PlateTracker/input_video/50mm.mp4",
                 "--device", "gpu",
                 "--save_result", 
             ]

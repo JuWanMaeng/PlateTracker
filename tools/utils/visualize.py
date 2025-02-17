@@ -4,27 +4,38 @@
 
 import cv2
 import os
-import re # ocr 과정에서 중복된 공백 요소 제거
 import numpy as np
-import pytesseract
+from PIL import ImageFont, ImageDraw, Image
 
 __all__ = ["vis"]
 
-# object crop 시 사용
-#save_dir = "/home/hunature/Desktop/PlateTracker/result/crop_img" 
+# 한글 폰트 경로 설정
+font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"  
+font_size = 15
 
-def convert_origin_dots(x1, y1, w, h, bbox_margin_w, bbox_margin_h):
+font = ImageFont.truetype(font_path, font_size)
 
-    orig_w = max(w // (1 + 2 * bbox_margin_w), 0)
-    orig_h = max(h // (1 + 2 * bbox_margin_h), 0)
+# PIL을 이용해 한글을 그리는 함수
+def draw_text_pil(image, text, position, font, color):
+    image_pil = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))  # OpenCV 이미지를 PIL로 변환
+    draw = ImageDraw.Draw(image_pil)
+    draw.text(position, text, font=font, fill=color)  # 한글 텍스트 추가
+    return cv2.cvtColor(np.array(image_pil), cv2.COLOR_RGB2BGR)  # 다시 OpenCV 포맷으로 변환
 
-    delta_w = w * (bbox_margin_w / (1 + 2 * bbox_margin_w))
-    delta_h = h * (bbox_margin_h / (1 + 2 * bbox_margin_h))
 
-    orig_x1 = max(x1 + delta_w, 0)
-    orig_y1 = max(y1 + delta_h, 0)
+# margin_bbox를 original bbox 좌표로 변환할 때 사용
+# def convert_origin_dots(x1, y1, w, h, bbox_margin_w, bbox_margin_h):
 
-    return orig_x1, orig_y1, orig_w, orig_h
+#     orig_w = max(w // (1 + 2 * bbox_margin_w), 0)
+#     orig_h = max(h // (1 + 2 * bbox_margin_h), 0)
+
+#     delta_w = w * (bbox_margin_w / (1 + 2 * bbox_margin_w))
+#     delta_h = h * (bbox_margin_h / (1 + 2 * bbox_margin_h))
+
+#     orig_x1 = max(x1 + delta_w, 0)
+#     orig_y1 = max(y1 + delta_h, 0)
+
+#     return orig_x1, orig_y1, orig_w, orig_h
 
 def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
@@ -103,6 +114,7 @@ def plot_tracking(image,
         orig_x1, orig_y1, orig_x2, orig_y2 = xyxy[i]
         orig_w = orig_x2 - orig_x1
         orig_h = orig_y2 - orig_y1
+        
         intbox = tuple(map(int, (orig_x1, orig_y1, orig_x1 + orig_w, orig_y1 + orig_h)))
 
         tlwhbox = tuple(map(int, (x1, y1, x1 + w, y1 + h)))
@@ -118,10 +130,11 @@ def plot_tracking(image,
         cv2.putText(im, id_text, (intbox[0], intbox[1]), cv2.FONT_HERSHEY_PLAIN, text_scale, (0, 0, 255),
                     thickness=text_thickness)
         
+        # plate_info 안에 있는 obj 만 plot
         if obj_id in plate_info:
             ocr_result = plate_info[obj_id]
-            cv2.putText(im, ocr_result, (intbox[0], intbox[1]-10), cv2.FONT_HERSHEY_PLAIN, text_scale, (255, 0, 0),
-            thickness=text_thickness)
+            text_position = (intbox[0] + 5, intbox[1] - 15)
+            im = draw_text_pil(im, ocr_result, text_position, font, (255, 255, 255))
 
 
     # crop 한 후 fps plot   
